@@ -13,8 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Newtonsoft.Json.Linq;
-using System.Net;
-using System.IO;
+using System.Net.Http;
 
 namespace ListViewSample
 {
@@ -28,40 +27,24 @@ namespace ListViewSample
             InitializeComponent();
         }
 
-        private void Refresh_Button_Click(object sender, RoutedEventArgs e)
+        private async void Refresh_Button_Click(object sender, RoutedEventArgs e)
         {
-            string json = this.Request_Json();
+            string json = await RequestJson();
             this.ParseJson(json);
         }
 
-        private string Request_Json()
+        private async Task<string> RequestJson()
         {
-            string result = null;
             string url = "http://www.redmine.org/issues.json";
-            Console.WriteLine("url : " + url);
-
-            try
-            {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Stream stream = response.GetResponseStream();
-                StreamReader reader = new StreamReader(stream);
-                result = reader.ReadToEnd();
-                stream.Close();
-                response.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
+            HttpClient client = new HttpClient();
+            Task<string> getStringTask = client.GetStringAsync(url);
+            string result = await getStringTask;
             return result;
         }
 
         private void ParseJson(String json)
         {
             List<Issue> issues = new List<Issue>();
-
             JObject obj = JObject.Parse(json);
             JArray array = JArray.Parse(obj["issues"].ToString());
             foreach (JObject itemObj in array)
@@ -75,6 +58,7 @@ namespace ListViewSample
 
             IssueListView.ItemsSource = issues;
         }
+
 
         private void Clear_Button_Click(object sender, RoutedEventArgs e)
         {
